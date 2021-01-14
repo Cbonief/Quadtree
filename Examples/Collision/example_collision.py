@@ -1,14 +1,18 @@
 import pygame
+import pygame.freetype
 
 from Examples.Collision.particle import Particle
 from Quadtree import Rectangle, Circle, Point, Quadtree
-from util import random_zero_to_max
+from util import random_zero_to_max, average
 
 
 def run(window):
     timer = pygame.time.Clock()
     width = window.get_width()
     height = window.get_height()
+
+    font = pygame.freetype.SysFont('Comic Sans MS', 18)
+
     boundary = Rectangle((0, 0), (width, height))
 
     particles = []
@@ -18,6 +22,7 @@ def run(window):
         particles.append(Particle([random_zero_to_max(width), random_zero_to_max(height)], 2))
 
     running = True
+    frame_rate = []
     while running:
         window.fill((0, 0, 0))
         dt = timer.tick()
@@ -37,8 +42,9 @@ def run(window):
             particle.render(window)
             particle.move(width, height)
 
-        frame_rate = (1000/dt)
-        print(frame_rate)
+        if len(frame_rate) > 10:
+            frame_rate.pop(0)
+        frame_rate.append(1000/dt)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -46,6 +52,16 @@ def run(window):
 
             if event.type == pygame.MOUSEBUTTONUP:
                 using_quadtree = not using_quadtree
+
+        if using_quadtree:
+            text_render, _ = font.render('Using QuadTree', (255, 255, 255))
+        else:
+            text_render, _ = font.render('Not Using QuadTree', (255, 255, 255))
+        rect = text_render.get_rect(center=(400 + 100 / 2, 300 + 20 / 2))
+        window.blit(text_render, rect)
+        text_render, _ = font.render('{} FPS'.format(round(average(frame_rate), 1)), (255, 255, 255))
+        rect = text_render.get_rect(center=(400 + 100 / 2, 350 + 20 / 2))
+        window.blit(text_render, rect)
 
         pygame.display.update()
 
