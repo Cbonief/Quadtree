@@ -1,6 +1,3 @@
-import pygame
-
-
 class Point:
     def __init__(self, position, data=None):
         self.x = position[0]
