@@ -4,9 +4,9 @@ import sys
 
 sys.path.append("C:\\Users\\carlo\\Code\\Quadtree")
 
-from Examples.Collision.particle import Particle
+from Examples.Gravity.body import Body, calculate_energy, ajust_speeds
 from Quadtree import Rectangle, Circle, Point, Quadtree
-from util import random_zero_to_max, average
+from util import random_zero_to_max, average, random
 
 
 def run(window):
@@ -18,12 +18,12 @@ def run(window):
 
     boundary = Rectangle((0, 0), (width, height))
 
-    particles = []
+    bodies = []
 
     using_quadtree = False
-    for i in range(0, 200):
-        particles.append(Particle([random_zero_to_max(width), random_zero_to_max(height)], 2))
-
+    for _ in range(0, 10):
+        bodies.append(Body([random_zero_to_max(width), random_zero_to_max(height)], random(2,10)))
+    _, _, total_energy = calculate_energy(bodies)
     running = True
     frame_rate = []
     while running:
@@ -31,19 +31,20 @@ def run(window):
         dt = timer.tick()
         qtree = Quadtree(boundary, 4)
 
-        for particle in particles:
-            qtree.insert(particle)
+        for body in bodies:
+            qtree.insert(Point([body.x[0], body.x[1]]))
 
-        for particle in particles:
-            if not particle.highlight:
+        for body in bodies:
+            if not body.highlight:
                 if using_quadtree:
-                    region = Circle([particle.x, particle.y], particle.r * 2 - 1)
+                    region = Circle([body.x[0], body.x[1]], body.r * 2 - 1)
                     others = qtree.query(region)
-                    particle.check_collision(others)
+                    body.physics(others)
                 else:
-                    particle.check_collision(particles)
-            particle.render(window)
-            particle.move(width, height)
+                    body.physics(bodies)
+            body.render(window)
+            body.move(dt)
+        ajust_speeds(bodies, total_energy, 0.001, 1)
 
         if len(frame_rate) > 10:
             frame_rate.pop(0)
